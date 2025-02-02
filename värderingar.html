@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Värderingar</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .columns {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .column {
+            flex: 1;
+            min-width: 200px;
+            margin: 10px;
+        }
+        .selected-values {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 300px;
+        }
+        .add-value {
+            margin-top: 20px;
+        }
+        .draggable {
+            padding: 8px;
+            margin: 5px 0;
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: move;
+        }
+    </style>
+</head>
+<body>
+    <h1>Välj dina värderingar</h1>
+    <p>Välj 5 värderingar.</p>
+    <div class="columns">
+        <div class="column" id="column1"></div>
+        <div class="column" id="column2"></div>
+        <div class="column" id="column3"></div>
+    </div>
+    <div class="add-value">
+        <h2>Saknar du någon värdering? Lägg till egna värderingar</h2>
+        <input type="text" id="customValueInput" placeholder="Skriv din värdering här">
+        <button id="addCustomValue">Lägg till</button>
+    </div>
+    <div class="selected-values" id="selectedValuesSection" style="display: none;">
+        <h2>Dina valda värderingar</h2>
+        <p>Sortera denna lista så att den värdering du värderar högst hamnar överst på listan</p>
+        <ul id="selectedList"></ul>
+    </div>
+    <script>
+        const words = [
+            "Självrespekt", "Självdisciplin", "Självkontroll", "Självkänsla", "Ödmjukhet",
+            "Integritet", "Ärlighet", "Autenticitet", "Mod", "Styrka", "Självmedvetenhet",
+            "Självutveckling", "Tålamod", "Fokusering", "Beslutsamhet", "Respekt", "Tillit",
+            "Medkänsla", "Omtanke", "Vänlighet", "Tolerans", "Empati", "Frihet", "Kreativitet",
+            "Humor", "Glädje", "Hopp", "Familj", "Lojalitet", "Gemenskap", "Omhändertagande",
+            "Trygghet", "Kärlek", "Välvilja", "Engagemang", "Heder", "Stöd", "Uppskattning",
+            "Ömsesidighet", "Ansvar", "Uthållighet", "Passion", "Flexibilitet", "Målmedvetenhet",
+            "Tillförlitlighet", "Arbetsmoral", "Rättvisa", "Rättfärdighet", "Acceptans", "Förlåtelse",
+            "Tacksamhet", "Inspiration", "Hållbarhet", "Balans", "Visdom", "Lycka", "Optimism",
+            "Äventyr", "Enkelhet", "Förtjusning"
+        ].sort(); // Sortera alfabetiskt
+
+        const columns = [document.getElementById('column1'), document.getElementById('column2'), document.getElementById('column3')];
+        const selectedList = document.getElementById('selectedList');
+        const customValueInput = document.getElementById('customValueInput');
+        const addCustomValueButton = document.getElementById('addCustomValue');
+        const maxSelections = 5;
+        const cookieName = 'selectedWords';
+        const customCookieName = 'customWords';
+        const selectedValuesSection = document.getElementById('selectedValuesSection');
+
+        // Funktion för att läsa kakor
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return decodeURIComponent(parts.pop().split(';').shift());
+        }
+
+        // Funktion för att skriva kakor
+        function setCookie(name, value, days) {
+            const date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            document.cookie = `${name}=${encodeURIComponent(value)}; expires=${date.toUTCString()}; path=/`;
+        }
+
+        // Uppdatera lista med valda värderingar
+        function updateSelectedList(selected) {
+            selectedList.innerHTML = '';
+            selected.forEach((word, index) => {
+                const li = document.createElement('li');
+                li.textContent = word;
+                li.classList.add('draggable');
+                li.setAttribute('draggable', 'true');
+                li.setAttribute('data-index', index);
+                selectedList.appendChild(li);
+
+                li.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text', e.target.dataset.index);
+                });
+
+                li.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                });
+
+                li.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    const draggedIndex = e.dataTransfer.getData('text');
+                    const targetIndex = e.target.dataset.index;
+                    if (draggedIndex !== targetIndex) {
+                        const temp = selected[draggedIndex];
+                        selected[draggedIndex] = selected[targetIndex];
+                        selected[targetIndex] = temp;
+                        updateSelectedList(selected);
+                        setCookie(cookieName, selected.join(','), 700);  // Spara ny ordning som kaka
+                    }
+                });
+            });
+
+            // Show or hide the "selected values" section based on the number of selections
+            if (selected.length === maxSelections) {
+                selectedValuesSection.style.display = 'block';
+            } else {
+                selectedValuesSection.style.display = 'none';
+            }
+        }
+
+        // Placera checkboxar i kolumner och återställ status från kakor
+        const savedWords = getCookie(cookieName) ? getCookie(cookieName).split(',') : [];
+        const savedCustomWords = getCookie(customCookieName) ? getCookie(customCookieName).split(',') : [];
+
+        // Lägg till ord från kakor som checkboxar
+        words.concat(savedCustomWords).forEach((word, index) => {
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.value = word;
+
+            // Återställ markerade checkboxar från kakor
+            if (savedWords.includes(word)) {
+                checkbox.checked = true;
+            }
+
+            const label = document.createElement('label');
+            label.appendChild(checkbox);
+            label.appendChild(document.createTextNode(` ${word}`));
+            label.style.display = "block";
+
+            columns[index % 3].appendChild(label);
+
+            // Lägg till händelse för att uppdatera kakor och listan
+            checkbox.addEventListener('change', () => {
+                updateSelections(checkbox);
+            });
+        });
+
+        // Lägg till egna värderingar
+        addCustomValueButton.addEventListener('click', () => {
+            const customValue = customValueInput.value.trim();
+            if (!customValue) return;
+
+            // Lägg till den egna värderingen till den valda listan
+            const selected = Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+            selected.push(customValue);
+            setCookie(cookieName, selected.join(','), 700);  // Spara som kaka
+
+            // Lägg till den egna värderingen till kakorna för egna ord
+            const customWords = savedCustomWords.concat(customValue);
+            setCookie(customCookieName, customWords.join(','), 700);
+
+            // Skapa en ny checkbox för det egna värdet
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.value = customValue;
+
+            const label = document.createElement('label');
+            label.appendChild(checkbox);
+            label.appendChild(document.createTextNode(` ${customValue}`));
+            label.style.display = "block";
+
+            columns[2].appendChild(label);
+
+            // Lägg till händelse för att uppdatera kakor och listan
+            checkbox.addEventListener('change', () => {
+                updateSelections(checkbox);
+            });
+
+            customValueInput.value = '';
+            updateSelections(checkbox, true);
+        });
+
+        // Uppdatera kakor och listan när ett val görs
+        function updateSelections(checkbox, isNew = false) {
+            const selected = Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+
+            if (selected.length > maxSelections) {
+                if (!isNew) checkbox.checked = false;
+                alert(`Du kan endast välja upp till ${maxSelections} värderingar.`);
+            } else {
+                setCookie(cookieName, selected.join(','), 700);
+                updateSelectedList(selected);
+            }
+        }
+
+        // Uppdatera listan med valda värderingar
+        updateSelectedList(savedWords);
+    </script>
+</body>
+</html>

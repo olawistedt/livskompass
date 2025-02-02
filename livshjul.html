@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Livskompass</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+    <style>
+        /* Ensuring canvas does not scale */
+        canvas {
+            display: block; /* Removes any default inline behavior */
+            width: 600px !important;
+            height: 600px !important;
+        }
+    </style>
+</head>
+<body>
+    <h1>LIVSKOMPASS</h1>
+    <canvas id="pieChart" width="600" height="600"></canvas>
+    <script>
+        const ctx = document.getElementById('pieChart').getContext('2d');
+        const data = {
+            labels: ['Relationer', 'Personlig utveckling', 'Fysisk miljö', 'Hälsa', 'Karriär', 'Pengar', 'Fritid & rekreation', 'Kärlek'],
+            datasets: [{
+                data: [12.5, 12.5, 12.5, 12.5, 12.5, 12.5, 12.5, 12.5],  // Even distribution
+                backgroundColor: [
+                    'rgba(255, 87, 34, 0.8)',  // Vibrant Red
+                    'rgba(33, 150, 243, 0.8)', // Blue
+                    'rgba(0, 188, 212, 0.8)',  // Teal
+                    'rgba(76, 175, 80, 0.8)',  // Green
+                    'rgba(156, 39, 176, 0.8)', // Purple
+                    'rgba(255, 159, 64, 0.8)', // Orange
+                    'rgba(233, 30, 99, 0.8)',  // Pink
+                    'rgba(0, 150, 136, 0.8)'   // Deep Teal
+                ],
+                borderColor: [
+                    'rgba(255, 87, 34, 1)', 
+                    'rgba(33, 150, 243, 1)', 
+                    'rgba(0, 188, 212, 1)', 
+                    'rgba(76, 175, 80, 1)', 
+                    'rgba(156, 39, 176, 1)', 
+                    'rgba(255, 159, 64, 1)', 
+                    'rgba(233, 30, 99, 1)', 
+                    'rgba(0, 150, 136, 1)'
+                ],
+                borderWidth: 1
+            }]
+        };
+        const config = {
+            type: 'pie',
+            data: data,
+            options: {
+                plugins: {
+                    datalabels: {
+                        color: '#fff', // White text on top of the segments
+                        font: {
+                            size: 14
+                        },
+                        formatter: (value, context) => {
+                            return context.chart.data.labels[context.dataIndex];
+                        }
+                    }
+                }
+            },
+            plugins: [ChartDataLabels]
+        };
+        new Chart(ctx, config);
+    </script>
+</body>
+</html>
